@@ -1,9 +1,5 @@
 package parcelpoint.storage;
 
-import parcelpoint.domain.Parcel;
-import parcelpoint.domain.ParcelSize;
-import parcelpoint.domain.ParcelStatus;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -14,6 +10,10 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import parcelpoint.domain.Parcel;
+import parcelpoint.domain.ParcelSize;
+import parcelpoint.domain.ParcelStatus;
 
 public class H2ParcelRepository implements ParcelRepository {
     private static final String CREATE_TABLE = """
@@ -73,9 +73,19 @@ public class H2ParcelRepository implements ParcelRepository {
 
     @Override
     public List<Parcel> findAll() {
-        // TODO Step 0.11: read every row of the PARCEL table as findByCode does,
-        // TODO turn each row into a Parcel with toParcel, and return the list.
-        return List.of();
+        String sql = "SELECT * FROM PARCEL ORDER BY CODE";
+        List<Parcel> parcels = new ArrayList<>();
+        try (Connection connection = connect();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (ResultSet row = statement.executeQuery()) {
+                while (row.next()) {
+                    parcels.add(toParcel(row));
+                }
+                return parcels;
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Cannot read the parcels", e);
+        }
     }
 
     private Parcel toParcel(ResultSet row) throws SQLException {
